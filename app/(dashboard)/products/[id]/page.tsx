@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { api } from '@/lib/api';
+import { apiProducts, apiTransactions } from '@/lib/api';
 import Toast from '@/components/common/Toast';
 import { ArrowLeft, Package, History as HistoryIcon } from 'lucide-react';
 
@@ -47,7 +47,7 @@ export default function ProductDetailPage() {
 
   const fetchProduct = async () => {
     try {
-      const data = await api.getProductById(params.id as string);
+      const data = await apiProducts.getProductById(params.id as string);
       setProduct(data);
       setFormData({
         nama_barang: data.nama_barang,
@@ -65,7 +65,9 @@ export default function ProductDetailPage() {
 
   const fetchTransactions = async () => {
     try {
-      const data = await api.getTransactions({ product_id: params.id as string });
+      const data = await apiTransactions.getTransactions({
+        product_id: params.id as string,
+      });
       setTransactions(data);
     } catch (error: any) {
       console.error('Failed to load transactions:', error);
@@ -75,7 +77,7 @@ export default function ProductDetailPage() {
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await api.updateProduct(params.id as string, {
+      await apiProducts.updateProduct(params.id as string, {
         ...formData,
         stok: parseInt(formData.stok),
         minimum_stok: parseInt(formData.minimum_stok),

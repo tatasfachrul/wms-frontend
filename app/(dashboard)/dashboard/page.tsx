@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { api } from '@/lib/api';
+import { apiDashboards } from '@/lib/api';
 import SummaryCard from '@/components/common/SummaryCard';
 import { Package, AlertTriangle, FileText } from 'lucide-react';
 import Toast from '@/components/common/Toast';
@@ -21,7 +21,7 @@ export default function DashboardPage() {
 
   const fetchStats = async () => {
     try {
-      const data = await api.getDashboardStats();
+      const data = await apiDashboards.getDashboardStats();
       setStats(data);
     } catch (error: any) {
       setToast({ message: error.message || 'Failed to load dashboard stats', type: 'error' });

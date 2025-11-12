@@ -1,19 +1,19 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { api } from '@/lib/api';
+import { apiProducts } from '@/lib/api/';
 import Modal from '@/components/common/Modal';
 import Toast from '@/components/common/Toast';
 import { Plus, Search, Eye } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 interface Product {
-  id: string;
-  nama_barang: string;
+  id: number;
+  stock: number;
+  minimum_stock: number;
+  name: string;
   sku: string;
-  stok: number;
-  lokasi_rak: string;
-  minimum_stok: number;
+  shelf_location: string;
 }
 
 export default function ProductsPage() {
@@ -25,11 +25,11 @@ export default function ProductsPage() {
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   const [formData, setFormData] = useState({
-    nama_barang: '',
-    sku: '',
-    stok: '',
-    lokasi_rak: '',
-    minimum_stok: '',
+    name: "",
+    sku: "",
+    stock: 0,
+    shelf_location: "",
+    minimum_stock: 0,
   });
 
   useEffect(() => {
@@ -38,8 +38,9 @@ export default function ProductsPage() {
 
   const fetchProducts = async () => {
     try {
-      const data = await api.getProducts({ search: searchTerm });
-      setProducts(data);
+      const data = await apiProducts.getProducts({ keyword: searchTerm });
+      console.log('Data', data)
+      setProducts(data.data);
     } catch (error: any) {
       setToast({ message: error.message || 'Failed to load products', type: 'error' });
     } finally {
@@ -50,19 +51,19 @@ export default function ProductsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await api.createProduct({
+      await apiProducts.createProduct({
         ...formData,
-        stok: parseInt(formData.stok),
-        minimum_stok: parseInt(formData.minimum_stok),
+        stock: formData.stock,
+        minimum_stock: formData.minimum_stock,
       });
       setToast({ message: 'Product added successfully!', type: 'success' });
       setIsModalOpen(false);
       setFormData({
-        nama_barang: '',
-        sku: '',
-        stok: '',
-        lokasi_rak: '',
-        minimum_stok: '',
+        name: "",
+        sku: "",
+        stock: 0,
+        shelf_location: "",
+        minimum_stock: 0,
       });
       fetchProducts();
     } catch (error: any) {
@@ -85,7 +86,9 @@ export default function ProductsPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Products</h1>
-            <p className="text-gray-600 mt-1">Manage your warehouse inventory</p>
+            <p className="text-gray-600 mt-1">
+              Manage your warehouse inventory
+            </p>
           </div>
           <button
             onClick={() => setIsModalOpen(true)}
@@ -137,13 +140,19 @@ export default function ProductsPage() {
               <tbody className="bg-white divide-y divide-gray-200">
                 {isLoading ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
+                    <td
+                      colSpan={6}
+                      className="px-6 py-4 text-center text-gray-500"
+                    >
                       Loading...
                     </td>
                   </tr>
                 ) : products.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
+                    <td
+                      colSpan={6}
+                      className="px-6 py-4 text-center text-gray-500"
+                    >
                       No products found
                     </td>
                   </tr>
@@ -151,7 +160,7 @@ export default function ProductsPage() {
                   products.map((product) => (
                     <tr key={product.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {product.nama_barang}
+                        {product.name}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                         {product.sku}
@@ -159,19 +168,19 @@ export default function ProductsPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <span
                           className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            product.stok <= product.minimum_stok
-                              ? 'bg-red-100 text-red-800'
-                              : 'bg-green-100 text-green-800'
+                            product.stock <= product.minimum_stock
+                              ? "bg-red-100 text-red-800"
+                              : "bg-green-100 text-green-800"
                           }`}
                         >
-                          {product.stok}
+                          {product.stock}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                        {product.lokasi_rak}
+                        {product.shelf_location}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                        {product.minimum_stok}
+                        {product.minimum_stock}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <button
@@ -191,36 +200,52 @@ export default function ProductsPage() {
         </div>
       </div>
 
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Add New Product">
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title="Add New Product"
+      >
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Product Name</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Product Name
+            </label>
             <input
               type="text"
-              value={formData.nama_barang}
-              onChange={(e) => setFormData({ ...formData, nama_barang: e.target.value })}
+              value={formData.name}
+              onChange={(e) =>
+                setFormData({ ...formData, name: e.target.value })
+              }
               required
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">SKU</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              SKU
+            </label>
             <input
               type="text"
               value={formData.sku}
-              onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, sku: e.target.value })
+              }
               required
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Stock</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Stock
+            </label>
             <input
               type="number"
-              value={formData.stok}
-              onChange={(e) => setFormData({ ...formData, stok: e.target.value })}
+              value={formData.stock}
+              onChange={(e) =>
+                setFormData({ ...formData, stock: Number(e.target.value) })
+              }
               required
               min="0"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
@@ -228,22 +253,30 @@ export default function ProductsPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Location
+            </label>
             <input
               type="text"
-              value={formData.lokasi_rak}
-              onChange={(e) => setFormData({ ...formData, lokasi_rak: e.target.value })}
+              value={formData.shelf_location}
+              onChange={(e) =>
+                setFormData({ ...formData, shelf_location: e.target.value })
+              }
               required
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Minimum Stock</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Minimum Stock
+            </label>
             <input
               type="number"
-              value={formData.minimum_stok}
-              onChange={(e) => setFormData({ ...formData, minimum_stok: e.target.value })}
+              value={formData.minimum_stock}
+              onChange={(e) =>
+                setFormData({ ...formData, minimum_stock: Number(e.target.value) })
+              }
               required
               min="0"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"

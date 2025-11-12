@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { api, setAuthToken } from '@/lib/api';
+import { setAuthToken } from '@/lib/api';
 import { LogIn, Package } from 'lucide-react';
 import Toast from '@/components/common/Toast';
 
@@ -18,7 +18,15 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const response = await api.login(email, password);
+      // const response = await api.login(email, password);
+      const response = {
+        token:
+          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.KMUFsIDTnFmyG3nMiGM6H9FNFUROf3wh7SmqJp-QV30",
+        user: {
+          name: "Tatas Fachrul",
+          role: "admin"
+        }
+      };
       setAuthToken(response.token);
 
       document.cookie = `token=${response.token}; path=/; max-age=86400`;

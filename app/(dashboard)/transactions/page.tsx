@@ -1,10 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { api } from '@/lib/api';
+import { apiProducts, apiTransactions } from '@/lib/api';
 import Modal from '@/components/common/Modal';
 import Toast from '@/components/common/Toast';
 import { Plus, FileText } from 'lucide-react';
+import { Product } from '@/lib/types';
 
 interface Transaction {
   id: string;
@@ -12,12 +13,6 @@ interface Transaction {
   type: string;
   quantity: number;
   created_at: string;
-}
-
-interface Product {
-  id: string;
-  nama_barang: string;
-  stok: number;
 }
 
 export default function TransactionsPage() {
@@ -28,7 +23,7 @@ export default function TransactionsPage() {
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   const [formData, setFormData] = useState({
-    product_id: '',
+    product_id: 0,
     type: 'IN',
     quantity: '',
   });
@@ -40,7 +35,7 @@ export default function TransactionsPage() {
 
   const fetchTransactions = async () => {
     try {
-      const data = await api.getTransactions();
+      const data = await apiTransactions.getTransactions();
       setTransactions(data);
     } catch (error: any) {
       setToast({ message: error.message || 'Failed to load transactions', type: 'error' });
@@ -51,8 +46,8 @@ export default function TransactionsPage() {
 
   const fetchProducts = async () => {
     try {
-      const data = await api.getProducts();
-      setProducts(data);
+      const data = await apiProducts.getProducts();
+      setProducts(data.data);
     } catch (error: any) {
       console.error('Failed to load products:', error);
     }
@@ -61,14 +56,14 @@ export default function TransactionsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await api.createTransaction({
+      await apiTransactions.createTransaction({
         ...formData,
         quantity: parseInt(formData.quantity),
       });
       setToast({ message: 'Transaction added successfully!', type: 'success' });
       setIsModalOpen(false);
       setFormData({
-        product_id: '',
+        product_id: 0,
         type: 'IN',
         quantity: '',
       });
@@ -180,14 +175,14 @@ export default function TransactionsPage() {
             <label className="block text-sm font-medium text-gray-700 mb-1">Product</label>
             <select
               value={formData.product_id}
-              onChange={(e) => setFormData({ ...formData, product_id: e.target.value })}
+              onChange={(e) => setFormData({ ...formData, product_id: Number(e.target.value) })}
               required
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
             >
               <option value="">Select a product</option>
               {products.map((product) => (
                 <option key={product.id} value={product.id}>
-                  {product.nama_barang} (Stock: {product.stok})
+                  {product.name} (Stock: {product.stock})
                 </option>
               ))}
             </select>
@@ -223,7 +218,7 @@ export default function TransactionsPage() {
               <p className="text-sm text-yellow-800">
                 Current stock:{' '}
                 <span className="font-semibold">
-                  {products.find((p) => p.id === formData.product_id)?.stok || 0}
+                  {products.find((p) => p.id, 10 === formData.product_id)?.stock || 0}
                 </span>
               </p>
             </div>
