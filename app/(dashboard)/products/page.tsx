@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { apiProducts } from '@/lib/api/';
+import { apiProducts, getRoles } from '@/lib/api/';
 import Modal from '@/components/common/Modal';
 import Toast from '@/components/common/Toast';
 import { Plus, Search, Eye, Trash } from 'lucide-react';
@@ -82,6 +82,8 @@ export default function ProductsPage() {
        });
     }
   };
+  
+  const userRoles = getRoles()
 
   return (
     <>
@@ -102,13 +104,17 @@ export default function ProductsPage() {
               Manage your warehouse inventory
             </p>
           </div>
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition flex items-center gap-2 font-medium"
-          >
-            <Plus className="w-5 h-5" />
-            Add Product
-          </button>
+          {userRoles !== "admin" ? (
+            <></>
+          ) : (
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition flex items-center gap-2 font-medium"
+            >
+              <Plus className="w-5 h-5" />
+              Add Product
+            </button>
+          )}
         </div>
 
         <div className="bg-white rounded-lg shadow border border-gray-200">
@@ -144,9 +150,13 @@ export default function ProductsPage() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Min Stock
                   </th>
-                  <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">
-                    Actions
-                  </th>
+                  {userRoles !== "admin" ? (
+                    <></>
+                  ) : (
+                    <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">
+                      Actions
+                    </th>
+                  )}
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -194,29 +204,31 @@ export default function ProductsPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                         {product.minimum_stock}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <div className="flex items-center justify-center gap-3">
-                          <button
-                            onClick={() =>
-                              router.push(`/products/${product.id}`)
-                            }
-                            className="text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"
-                          >
-                            <Eye className="w-4 h-4" />
-                            View
-                          </button>
-                          |
-                          <button
-                            onClick={() =>
-                              handleDelete(product.id)
-                            }
-                            className="text-red-600 hover:text-red-800 font-medium flex items-center gap-1"
-                          >
-                            <Trash className="w-4 h-4" />
-                            Delete
-                          </button>
-                        </div>
-                      </td>
+                      {userRoles !== "admin" ? (
+                        <></>
+                      ) : (
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          <div className="flex items-center justify-center gap-3">
+                            <button
+                              onClick={() =>
+                                router.push(`/products/${product.id}`)
+                              }
+                              className="text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"
+                            >
+                              <Eye className="w-4 h-4" />
+                              View
+                            </button>
+                            |
+                            <button
+                              onClick={() => handleDelete(product.id)}
+                              className="text-red-600 hover:text-red-800 font-medium flex items-center gap-1"
+                            >
+                              <Trash className="w-4 h-4" />
+                              Delete
+                            </button>
+                          </div>
+                        </td>
+                      )}
                     </tr>
                   ))
                 )}
