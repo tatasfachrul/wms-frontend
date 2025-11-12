@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { apiProducts } from '@/lib/api/';
 import Modal from '@/components/common/Modal';
 import Toast from '@/components/common/Toast';
-import { Plus, Search, Eye } from 'lucide-react';
+import { Plus, Search, Eye, Trash } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 interface Product {
@@ -70,6 +70,19 @@ export default function ProductsPage() {
     }
   };
 
+  const handleDelete = async (productId: number)=> {
+    try {
+      await apiProducts.deleteProduct(productId)
+      setToast({ message: "Product deleted successfully!", type: "success" });
+      fetchProducts();
+    } catch (error: any) {
+       setToast({
+         message: error.message || "Failed to delete product",
+         type: "error",
+       });
+    }
+  };
+
   return (
     <>
       {toast && (
@@ -131,7 +144,7 @@ export default function ProductsPage() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Min Stock
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">
                     Actions
                   </th>
                 </tr>
@@ -182,13 +195,27 @@ export default function ProductsPage() {
                         {product.minimum_stock}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <button
-                          onClick={() => router.push(`/products/${product.id}`)}
-                          className="text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"
-                        >
-                          <Eye className="w-4 h-4" />
-                          View
-                        </button>
+                        <div className="flex items-center justify-center gap-3">
+                          <button
+                            onClick={() =>
+                              router.push(`/products/${product.id}`)
+                            }
+                            className="text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"
+                          >
+                            <Eye className="w-4 h-4" />
+                            View
+                          </button>
+                          |
+                          <button
+                            onClick={() =>
+                              handleDelete(product.id)
+                            }
+                            className="text-red-600 hover:text-red-800 font-medium flex items-center gap-1"
+                          >
+                            <Trash className="w-4 h-4" />
+                            Delete
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -274,7 +301,10 @@ export default function ProductsPage() {
               type="number"
               value={formData.minimum_stock}
               onChange={(e) =>
-                setFormData({ ...formData, minimum_stock: Number(e.target.value) })
+                setFormData({
+                  ...formData,
+                  minimum_stock: Number(e.target.value),
+                })
               }
               required
               min="0"

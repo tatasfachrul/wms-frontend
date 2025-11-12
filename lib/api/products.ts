@@ -27,4 +27,8 @@ export const apiProducts = {
       method: "PATCH",
       body: JSON.stringify(data),
     }),
+  // Delete
+  deleteProduct: (id: number) => apiRequest<any>(`/products/${id}`, {
+    method: "DELETE"
+  })
 };
