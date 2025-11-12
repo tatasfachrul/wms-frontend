@@ -1,12 +1,12 @@
 import { apiRequest } from "./api";
-import { ListResponse, Product } from "@/lib/types";
+import { ListResponse, Transaction } from "@/lib/types";
 
 export const apiTransactions = {
-  getTransactions: (params?: { product_id?: string }) => {
+  getTransactions: (params?: { page?: number, perPage?: number }) => {
     const query = params
       ? `?${new URLSearchParams(params as any).toString()}`
       : "";
-    return apiRequest<any[]>(`/transactions${query}`);
+    return apiRequest<ListResponse<Transaction>>(`/transactions${query}`);
   },
 
   createTransaction: (data: any) =>

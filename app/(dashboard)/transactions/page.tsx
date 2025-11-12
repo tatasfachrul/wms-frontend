@@ -5,15 +5,8 @@ import { apiProducts, apiTransactions } from '@/lib/api';
 import Modal from '@/components/common/Modal';
 import Toast from '@/components/common/Toast';
 import { Plus, FileText } from 'lucide-react';
-import { Product } from '@/lib/types';
+import { Product, Transaction } from '@/lib/types';
 
-interface Transaction {
-  id: string;
-  product_name: string;
-  type: string;
-  quantity: number;
-  created_at: string;
-}
 
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -36,7 +29,7 @@ export default function TransactionsPage() {
   const fetchTransactions = async () => {
     try {
       const data = await apiTransactions.getTransactions();
-      setTransactions(data);
+      setTransactions(data.data);
     } catch (error: any) {
       setToast({ message: error.message || 'Failed to load transactions', type: 'error' });
     } finally {
@@ -213,12 +206,12 @@ export default function TransactionsPage() {
             />
           </div>
 
-          {formData.product_id && formData.type === 'OUT' && (
+          {formData.product_id !== 0 && formData.type === 'OUT' && (
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
               <p className="text-sm text-yellow-800">
                 Current stock:{' '}
                 <span className="font-semibold">
-                  {products.find((p) => p.id, 10 === formData.product_id)?.stock || 0}
+                  {products.find((p) => p.id === formData.product_id)?.stock}
                 </span>
               </p>
             </div>

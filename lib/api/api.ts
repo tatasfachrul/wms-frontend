@@ -36,8 +36,12 @@ export async function apiRequest<T>(
   if (!response.ok) {
     const error = await response
       .json()
-      .catch(() => ({ message: "An error occurred" }));
-    throw new Error(error.message || `HTTP ${response.status}`);
+      .catch(() => ({}));
+
+    const message =
+      error?.messages?.error || error?.message || `HTTP ${response.status}`;
+      
+    throw new Error(message);
   }
 
   return response.json();
