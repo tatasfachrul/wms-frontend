@@ -39,7 +39,6 @@ export default function ProductsPage() {
   const fetchProducts = async () => {
     try {
       const data = await apiProducts.getProducts({ keyword: searchTerm });
-      console.log('Data', data)
       setProducts(data.data);
     } catch (error: any) {
       setToast({ message: error.message || 'Failed to load products', type: 'error' });

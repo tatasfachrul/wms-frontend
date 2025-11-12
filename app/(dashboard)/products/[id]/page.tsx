@@ -5,15 +5,8 @@ import { useParams, useRouter } from 'next/navigation';
 import { apiProducts, apiTransactions } from '@/lib/api';
 import Toast from '@/components/common/Toast';
 import { ArrowLeft, Package, History as HistoryIcon } from 'lucide-react';
+import { Product } from '@/lib/types';
 
-interface Product {
-  id: string;
-  nama_barang: string;
-  sku: string;
-  stok: number;
-  lokasi_rak: string;
-  minimum_stok: number;
-}
 
 interface Transaction {
   id: string;
@@ -32,12 +25,13 @@ export default function ProductDetailPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
-  const [formData, setFormData] = useState({
-    nama_barang: '',
-    sku: '',
-    stok: '',
-    lokasi_rak: '',
-    minimum_stok: '',
+  const [formData, setFormData] = useState<Product>({
+    id: 0,
+    name: "",
+    sku: "",
+    stock: 0,
+    shelf_location: "",
+    minimum_stock: 0,
   });
 
   useEffect(() => {
@@ -48,13 +42,14 @@ export default function ProductDetailPage() {
   const fetchProduct = async () => {
     try {
       const data = await apiProducts.getProductById(params.id as string);
-      setProduct(data);
+      setProduct(data.data);
       setFormData({
-        nama_barang: data.nama_barang,
-        sku: data.sku,
-        stok: data.stok.toString(),
-        lokasi_rak: data.lokasi_rak,
-        minimum_stok: data.minimum_stok.toString(),
+        id: data.data.id,
+        name: data.data.name,
+        sku: data.data.sku,
+        stock: data.data.stock,
+        shelf_location: data.data.shelf_location,
+        minimum_stock: data.data.minimum_stock,
       });
     } catch (error: any) {
       setToast({ message: error.message || 'Failed to load product', type: 'error' });
@@ -77,10 +72,11 @@ export default function ProductDetailPage() {
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await apiProducts.updateProduct(params.id as string, {
+      await apiProducts.updateProduct(formData.id, {
         ...formData,
-        stok: parseInt(formData.stok),
-        minimum_stok: parseInt(formData.minimum_stok),
+        sku: formData.sku,
+        stock: formData.stock,
+        minimum_stock: formData.minimum_stock,
       });
       setToast({ message: 'Product updated successfully!', type: 'success' });
       setIsEditing(false);
@@ -120,13 +116,13 @@ export default function ProductDetailPage() {
       <div className="space-y-6">
         <div className="flex items-center gap-4">
           <button
-            onClick={() => router.push('/products')}
+            onClick={() => router.push("/products")}
             className="p-2 hover:bg-gray-100 rounded-lg transition"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">{product.nama_barang}</h1>
+            <h1 className="text-3xl font-bold text-gray-900">{product.name}</h1>
             <p className="text-gray-600 mt-1">SKU: {product.sku}</p>
           </div>
         </div>
@@ -135,22 +131,22 @@ export default function ProductDetailPage() {
           <div className="border-b border-gray-200">
             <div className="flex">
               <button
-                onClick={() => setActiveTab('details')}
+                onClick={() => setActiveTab("details")}
                 className={`px-6 py-3 font-medium text-sm flex items-center gap-2 border-b-2 transition ${
-                  activeTab === 'details'
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-gray-600 hover:text-gray-900'
+                  activeTab === "details"
+                    ? "border-blue-600 text-blue-600"
+                    : "border-transparent text-gray-600 hover:text-gray-900"
                 }`}
               >
                 <Package className="w-4 h-4" />
                 Details
               </button>
               <button
-                onClick={() => setActiveTab('history')}
+                onClick={() => setActiveTab("history")}
                 className={`px-6 py-3 font-medium text-sm flex items-center gap-2 border-b-2 transition ${
-                  activeTab === 'history'
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-gray-600 hover:text-gray-900'
+                  activeTab === "history"
+                    ? "border-blue-600 text-blue-600"
+                    : "border-transparent text-gray-600 hover:text-gray-900"
                 }`}
               >
                 <HistoryIcon className="w-4 h-4" />
@@ -160,7 +156,7 @@ export default function ProductDetailPage() {
           </div>
 
           <div className="p-6">
-            {activeTab === 'details' ? (
+            {activeTab === "details" ? (
               <form onSubmit={handleUpdate} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
@@ -169,30 +165,43 @@ export default function ProductDetailPage() {
                     </label>
                     <input
                       type="text"
-                      value={formData.nama_barang}
-                      onChange={(e) => setFormData({ ...formData, nama_barang: e.target.value })}
+                      value={formData.name}
+                      onChange={(e) =>
+                        setFormData({ ...formData, name: e.target.value })
+                      }
                       disabled={!isEditing}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none disabled:bg-gray-50"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">SKU</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      SKU
+                    </label>
                     <input
                       type="text"
                       value={formData.sku}
-                      onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, sku: e.target.value })
+                      }
                       disabled={!isEditing}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none disabled:bg-gray-50"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Stock</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Stock
+                    </label>
                     <input
                       type="number"
-                      value={formData.stok}
-                      onChange={(e) => setFormData({ ...formData, stok: e.target.value })}
+                      value={formData.stock}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          stock: Number(e.target.value),
+                        })
+                      }
                       disabled={!isEditing}
                       min="0"
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none disabled:bg-gray-50"
@@ -200,11 +209,18 @@ export default function ProductDetailPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Location
+                    </label>
                     <input
                       type="text"
-                      value={formData.lokasi_rak}
-                      onChange={(e) => setFormData({ ...formData, lokasi_rak: e.target.value })}
+                      value={formData.shelf_location}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          shelf_location: e.target.value,
+                        })
+                      }
                       disabled={!isEditing}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none disabled:bg-gray-50"
                     />
@@ -216,8 +232,13 @@ export default function ProductDetailPage() {
                     </label>
                     <input
                       type="number"
-                      value={formData.minimum_stok}
-                      onChange={(e) => setFormData({ ...formData, minimum_stok: e.target.value })}
+                      value={formData.minimum_stock}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          minimum_stock: Number(e.target.value),
+                        })
+                      }
                       disabled={!isEditing}
                       min="0"
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none disabled:bg-gray-50"
@@ -241,11 +262,12 @@ export default function ProductDetailPage() {
                         onClick={() => {
                           setIsEditing(false);
                           setFormData({
-                            nama_barang: product.nama_barang,
+                            id: product.id,
+                            name: product.name,
                             sku: product.sku,
-                            stok: product.stok.toString(),
-                            lokasi_rak: product.lokasi_rak,
-                            minimum_stok: product.minimum_stok.toString(),
+                            stock: product.stock,
+                            shelf_location: product.shelf_location,
+                            minimum_stock: product.minimum_stock,
                           });
                         }}
                         className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition font-medium"
@@ -264,7 +286,9 @@ export default function ProductDetailPage() {
               </form>
             ) : (
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Transaction History</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                  Transaction History
+                </h3>
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead className="bg-gray-50 border-b border-gray-200">
@@ -283,7 +307,10 @@ export default function ProductDetailPage() {
                     <tbody className="divide-y divide-gray-200">
                       {transactions.length === 0 ? (
                         <tr>
-                          <td colSpan={3} className="px-4 py-4 text-center text-gray-500">
+                          <td
+                            colSpan={3}
+                            className="px-4 py-4 text-center text-gray-500"
+                          >
                             No transactions found
                           </td>
                         </tr>
@@ -293,9 +320,9 @@ export default function ProductDetailPage() {
                             <td className="px-4 py-3 whitespace-nowrap">
                               <span
                                 className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                  transaction.type === 'IN'
-                                    ? 'bg-green-100 text-green-800'
-                                    : 'bg-red-100 text-red-800'
+                                  transaction.type === "IN"
+                                    ? "bg-green-100 text-green-800"
+                                    : "bg-red-100 text-red-800"
                                 }`}
                               >
                                 {transaction.type}
@@ -305,7 +332,9 @@ export default function ProductDetailPage() {
                               {transaction.quantity}
                             </td>
                             <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
-                              {new Date(transaction.created_at).toLocaleString()}
+                              {new Date(
+                                transaction.created_at
+                              ).toLocaleString()}
                             </td>
                           </tr>
                         ))

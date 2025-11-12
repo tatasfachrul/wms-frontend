@@ -1,5 +1,5 @@
 import { apiRequest } from "./api";
-import { ListResponse, Product, CreateProduct } from "@/lib/types";
+import { ListResponse, Product, CreateProduct, DetailResponse, UpdateProduct } from "@/lib/types";
 
 export const apiProducts = {
   // List
@@ -13,7 +13,8 @@ export const apiProducts = {
     return apiRequest<ListResponse<Product>>(`/products${query}`);
   },
   // Detail
-  getProductById: (id: string) => apiRequest<any>(`/products/${id}`),
+  getProductById: (id: string) =>
+    apiRequest<DetailResponse<Product>>(`/products/${id}`),
   // Create
   createProduct: (data: CreateProduct) =>
     apiRequest<any>("/products", {
@@ -21,7 +22,7 @@ export const apiProducts = {
       body: JSON.stringify(data),
     }),
   // Update
-  updateProduct: (id: string, data: any) =>
+  updateProduct: (id: number, data: UpdateProduct) =>
     apiRequest<any>(`/products/${id}`, {
       method: "PATCH",
       body: JSON.stringify(data),
