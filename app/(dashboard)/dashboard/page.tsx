@@ -33,7 +33,6 @@ export default function DashboardPage() {
     lowStockItems: [],
     totalTransactions: 0,
   });
-  const [loadingStats, setLoadingStats] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [toast, setToast] = useState<{
     message: string;
@@ -61,7 +60,7 @@ export default function DashboardPage() {
   // Fetch Dashboard Summary
   async function fetchSummary() {
     try {
-      setLoadingStats(true);
+      setIsLoading(true);
       const data = await apiDashboards.getDashboardStats();
       setStats(data.data);
     } catch (err: any) {
@@ -70,7 +69,7 @@ export default function DashboardPage() {
         type: "error",
       });
     } finally {
-      setLoadingStats(false);
+      setIsLoading(false);
     }
   }
 
