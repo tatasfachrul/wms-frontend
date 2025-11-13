@@ -1,6 +1,6 @@
 # Warehouse Management System (WMS) - Frontend
 
-A modern, clean admin dashboard UI for managing warehouse inventory, built with Next.js 13 and TailwindCSS.
+A modern, clean admin dashboard UI for managing warehouse inventory, built with Next.js 16 and TailwindCSS.
 
 ## Features
 
@@ -128,7 +128,7 @@ The frontend expects the following backend API endpoints:
     "minimum_stok": 10
   }
   ```
-- `PUT /api/products/:id` - Update product
+- `PATCH /api/products/:id` - Update product
 
 ### Transactions
 - `GET /api/transactions` - Get all transactions (supports ?product_id filter)
