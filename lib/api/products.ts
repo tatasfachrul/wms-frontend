@@ -6,6 +6,9 @@ export const apiProducts = {
   getProducts: async (params?: {
     keyword?: string;
     sort?: string;
+    order?: string;
+    page?: number;
+    perPage?: number;
   }): Promise<ListResponse<Product>> => {
     const query = params
       ? `?${new URLSearchParams(params as any).toString()}`
@@ -28,7 +31,8 @@ export const apiProducts = {
       body: JSON.stringify(data),
     }),
   // Delete
-  deleteProduct: (id: number) => apiRequest<any>(`/products/${id}`, {
-    method: "DELETE"
-  })
+  deleteProduct: (id: number) =>
+    apiRequest<any>(`/products/${id}`, {
+      method: "DELETE",
+    }),
 };

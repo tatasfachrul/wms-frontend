@@ -1,28 +1,31 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState } from 'react';
-import { apiProducts, getRoles } from '@/lib/api/';
-import Modal from '@/components/common/Modal';
-import Toast from '@/components/common/Toast';
-import { Plus, Search, Eye, Trash } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-
-interface Product {
-  id: number;
-  stock: number;
-  minimum_stock: number;
-  name: string;
-  sku: string;
-  shelf_location: string;
-}
+import React, { useEffect, useMemo, useState } from "react";
+import { apiProducts, getRoles } from "@/lib/api/";
+import Modal from "@/components/common/Modal";
+import Toast from "@/components/common/Toast";
+import { Plus, Search, Eye, Trash, ChevronDown, ChevronUp } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Product } from "@/lib/types";
 
 export default function ProductsPage() {
   const router = useRouter();
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [toast, setToast] = useState<{
+    message: string;
+    type: "success" | "error";
+  } | null>(null);
+
+  // Sort
+  const [sortField, setSortField] = useState<keyof Product>("id");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [page, setPage] = useState<number>(1);
+  const [perPage, setPerPage] = useState<number>(10);
+  const [totalPages, setTotalPage] = useState<number>(0)
+  const [total, setTotal] = useState<number>(0)
 
   const [formData, setFormData] = useState({
     name: "",
@@ -34,18 +37,47 @@ export default function ProductsPage() {
 
   useEffect(() => {
     fetchProducts();
-  }, [searchTerm]);
+  }, [searchTerm, sortField, sortOrder, page, perPage]);
 
   const fetchProducts = async () => {
     try {
-      const data = await apiProducts.getProducts({ keyword: searchTerm });
+      const data = await apiProducts.getProducts({
+        keyword: searchTerm,
+        sort: sortField,
+        page,
+        perPage
+      });
+
       setProducts(data.data);
+      setTotalPage(data.meta.totalPages)
     } catch (error: any) {
-      setToast({ message: error.message || 'Failed to load products', type: 'error' });
+      setToast({
+        message: error.message || "Failed to load products",
+        type: "error",
+      });
     } finally {
       setIsLoading(false);
     }
   };
+
+  const sortedProducts = useMemo(() => {
+    return products.sort((a, b) => {
+       if (!sortField) return 0; // no sorting yet
+
+       const valueA = a[sortField];
+       const valueB = b[sortField];
+
+       if (typeof valueA === "number" && typeof valueB === "number") {
+         // numeric sort
+         return sortOrder === "asc" ? valueA - valueB : valueB - valueA;
+       }
+
+       // string sort (case-insensitive)
+       return sortOrder === "asc"
+         ? String(valueA).localeCompare(String(valueB))
+         : String(valueB).localeCompare(String(valueA));
+    })
+  }, [products]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,7 +87,7 @@ export default function ProductsPage() {
         stock: formData.stock,
         minimum_stock: formData.minimum_stock,
       });
-      setToast({ message: 'Product added successfully!', type: 'success' });
+      setToast({ message: "Product added successfully!", type: "success" });
       setIsModalOpen(false);
       setFormData({
         name: "",
@@ -66,24 +98,36 @@ export default function ProductsPage() {
       });
       fetchProducts();
     } catch (error: any) {
-      setToast({ message: error.message || 'Failed to add product', type: 'error' });
+      setToast({
+        message: error.message || "Failed to add product",
+        type: "error",
+      });
     }
   };
 
-  const handleDelete = async (productId: number)=> {
+  const handleDelete = async (productId: number) => {
     try {
-      await apiProducts.deleteProduct(productId)
+      await apiProducts.deleteProduct(productId);
       setToast({ message: "Product deleted successfully!", type: "success" });
       fetchProducts();
     } catch (error: any) {
-       setToast({
-         message: error.message || "Failed to delete product",
-         type: "error",
-       });
+      setToast({
+        message: error.message || "Failed to delete product",
+        type: "error",
+      });
     }
   };
-  
-  const userRoles = getRoles()
+
+  const userRoles = getRoles();
+
+  const handleFieldClick = (field: keyof Product) => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortOrder("asc");
+    }
+  };
 
   return (
     <>
@@ -135,14 +179,56 @@ export default function ProductsPage() {
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Name
+                  <th
+                    onClick={() => handleFieldClick("name")}
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    <div className="flex gap-1 items-center">
+                      Name
+                      {sortField === "name" ? (
+                        sortOrder === "asc" ? (
+                          <ChevronUp className="w-4 h-4" />
+                        ) : (
+                          <ChevronDown className="w-4 h-4" />
+                        )
+                      ) : (
+                        ""
+                      )}
+                    </div>
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    SKU
+                  <th
+                    onClick={() => handleFieldClick("sku")}
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    <div className="flex gap-1 items-center">
+                      SKU
+                      {sortField === "sku" ? (
+                        sortOrder === "asc" ? (
+                          <ChevronUp className="w-4 h-4" />
+                        ) : (
+                          <ChevronDown className="w-4 h-4" />
+                        )
+                      ) : (
+                        ""
+                      )}
+                    </div>
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Stock
+                  <th
+                    onClick={() => handleFieldClick("stock")}
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    <div className="flex gap-1 items-center">
+                      Stock{" "}
+                      {sortField === "stock" ? (
+                        sortOrder === "asc" ? (
+                          <ChevronUp className="w-4 h-4" />
+                        ) : (
+                          <ChevronDown className="w-4 h-4" />
+                        )
+                      ) : (
+                        ""
+                      )}
+                    </div>
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Location
@@ -169,7 +255,7 @@ export default function ProductsPage() {
                       Loading...
                     </td>
                   </tr>
-                ) : products.length === 0 ? (
+                ) : sortedProducts.length === 0 ? (
                   <tr>
                     <td
                       colSpan={6}
@@ -179,7 +265,7 @@ export default function ProductsPage() {
                     </td>
                   </tr>
                 ) : (
-                  products.map((product) => (
+                  sortedProducts.map((product) => (
                     <tr key={product.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                         {product.name}
@@ -235,6 +321,36 @@ export default function ProductsPage() {
               </tbody>
             </table>
           </div>
+          {/* Pagination */}
+          {totalPages > 0 && (
+            <div className="flex justify-between items-center p-4 border-t border-gray-200 text-sm">
+              <button
+                onClick={() => setPage(page - 1)}
+                disabled={page === 1}
+                className={`px-3 py-1 rounded-lg border ${
+                  page === 1
+                    ? "text-gray-400 border-gray-200 cursor-not-allowed"
+                    : "text-blue-600 border-gray-300 hover:bg-gray-100"
+                }`}
+              >
+                Prev
+              </button>
+              <span>
+                Page {page} of {totalPages}
+              </span>
+              <button
+                onClick={() => setPage(page + 1)}
+                disabled={page === totalPages}
+                className={`px-3 py-1 rounded-lg border ${
+                  page === totalPages
+                    ? "text-gray-400 border-gray-200 cursor-not-allowed"
+                    : "text-blue-600 border-gray-300 hover:bg-gray-100"
+                }`}
+              >
+                Next
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
